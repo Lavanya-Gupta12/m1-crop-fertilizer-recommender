@@ -1,0 +1,490 @@
+{
+  "config": {
+    "backend": "tensorflow",
+    "keras": "3.15.1",
+    "seed": 42,
+    "folds": 5,
+    "epochs": 40,
+    "batch": 16,
+    "cal_fraction": 0.15,
+    "ece_bins": 15,
+    "rows": 2200,
+    "classes": 22
+  },
+  "leakage_check": {
+    "leaky_scaler_on_all_rows": {
+      "per_fold": [
+        {
+          "accuracy": 0.9727272727272728,
+          "macro_f1": 0.9725293831957387
+        },
+        {
+          "accuracy": 0.9704545454545455,
+          "macro_f1": 0.9705929364524298
+        },
+        {
+          "accuracy": 0.9681818181818181,
+          "macro_f1": 0.9666538532071267
+        },
+        {
+          "accuracy": 0.9863636363636363,
+          "macro_f1": 0.9864593401178766
+        },
+        {
+          "accuracy": 0.9681818181818181,
+          "macro_f1": 0.9679581728852082
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 0.9731818181818183,
+          "std": 0.007606000241218866
+        },
+        "macro_f1": {
+          "mean": 0.972838737171676,
+          "std": 0.007948786743590609
+        }
+      }
+    },
+    "scaler_inside_fold": {
+      "per_fold": [
+        {
+          "accuracy": 0.9727272727272728,
+          "macro_f1": 0.9725293831957387
+        },
+        {
+          "accuracy": 0.9681818181818181,
+          "macro_f1": 0.9684419728901322
+        },
+        {
+          "accuracy": 0.9681818181818181,
+          "macro_f1": 0.9666538532071267
+        },
+        {
+          "accuracy": 0.9863636363636363,
+          "macro_f1": 0.9864593401178766
+        },
+        {
+          "accuracy": 0.9681818181818181,
+          "macro_f1": 0.9679581728852082
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 0.9727272727272727,
+          "std": 0.007872958216222171
+        },
+        "macro_f1": {
+          "mean": 0.9724085444592164,
+          "std": 0.008156215869015994
+        }
+      }
+    }
+  },
+  "baseline_per_fold": [
+    {
+      "accuracy": 0.9772727272727273,
+      "macro_f1": 0.976936062546508,
+      "ece": 0.016824657917960367,
+      "nll": 0.0721054877222365,
+      "brier": 0.03725481460841259,
+      "mean_confidence": 0.9658386187704879
+    },
+    {
+      "accuracy": 0.9772727272727273,
+      "macro_f1": 0.9772287730625927,
+      "ece": 0.018388823044605308,
+      "nll": 0.06374739347785642,
+      "brier": 0.035949199248543166,
+      "mean_confidence": 0.9692449420585131
+    },
+    {
+      "accuracy": 0.975,
+      "macro_f1": 0.9748486430129563,
+      "ece": 0.018847325298093288,
+      "nll": 0.06754768401660101,
+      "brier": 0.03724029894266763,
+      "mean_confidence": 0.9603020843440091
+    },
+    {
+      "accuracy": 0.9863636363636363,
+      "macro_f1": 0.9863465588754422,
+      "ece": 0.022420238568706913,
+      "nll": 0.053051160697468645,
+      "brier": 0.027890103591924936,
+      "mean_confidence": 0.9639433977949295
+    },
+    {
+      "accuracy": 0.9772727272727273,
+      "macro_f1": 0.9772156592170326,
+      "ece": 0.019818161207808924,
+      "nll": 0.0749379294328094,
+      "brier": 0.04143596545856443,
+      "mean_confidence": 0.9640736581688532
+    }
+  ],
+  "baseline_summary": {
+    "accuracy": {
+      "mean": 0.9786363636363637,
+      "std": 0.004430361065822242
+    },
+    "macro_f1": {
+      "mean": 0.9785151393429062,
+      "std": 0.004489186941020448
+    },
+    "ece": {
+      "mean": 0.019259841207434958,
+      "std": 0.002071158635445855
+    },
+    "nll": {
+      "mean": 0.06627793106939439,
+      "std": 0.008542823533779895
+    },
+    "brier": {
+      "mean": 0.03595407637002255,
+      "std": 0.004960470673295013
+    },
+    "mean_confidence": {
+      "mean": 0.9646805402273586,
+      "std": 0.00325028732227491
+    }
+  },
+  "baseline_pooled_oof": {
+    "accuracy": 0.9786363636363636,
+    "macro_f1": 0.9786384467274704,
+    "ece": 0.01395582340900425,
+    "nll": 0.0662779310693944,
+    "brier": 0.035954076370022556,
+    "mean_confidence": 0.9646805402273586
+  },
+  "prior_reference_summary": {
+    "accuracy": {
+      "mean": 0.045454545454545456,
+      "std": 0.0
+    },
+    "macro_f1": {
+      "mean": 0.003952569169960474,
+      "std": 0.0
+    },
+    "ece": {
+      "mean": 1.3877787807814457e-16,
+      "std": 0.0
+    },
+    "nll": {
+      "mean": 3.091042453358315,
+      "std": 0.0
+    },
+    "brier": {
+      "mean": 0.954545454545455,
+      "std": 0.0
+    },
+    "mean_confidence": {
+      "mean": 0.045454545454545456,
+      "std": 0.0
+    }
+  },
+  "confidence_profile": {
+    "share_conf_ge_0.99": 0.7054545454545454,
+    "share_conf_ge_0.999": 0.4109090909090909,
+    "accuracy_when_conf_ge_0.99": 1.0,
+    "n_errors": 47,
+    "median_conf_on_errors": 0.6968954422822947,
+    "share_errors_with_conf_ge_0.9": 0.10638297872340426
+  },
+  "probes": [
+    {
+      "probe": "rice_like (in-distribution)",
+      "input": [
+        90.0,
+        42.0,
+        43.0,
+        20.8,
+        82.0,
+        6.5,
+        202.0
+      ],
+      "top1_prob_min": 0.598284011913431,
+      "top1_prob_median": 0.7284161195795296,
+      "top1_prob_max": 0.7714870375123487,
+      "predicted_classes_across_folds": [
+        "rice"
+      ]
+    },
+    {
+      "probe": "all zeros",
+      "input": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "top1_prob_min": 0.6932924896458517,
+      "top1_prob_median": 0.9988382500684841,
+      "top1_prob_max": 0.9999986312519941,
+      "predicted_classes_across_folds": [
+        "mango",
+        "mothbeans"
+      ]
+    },
+    {
+      "probe": "all features 2x train max",
+      "input": [
+        280.0,
+        290.0,
+        410.0,
+        87.35,
+        199.96,
+        19.87,
+        597.12
+      ],
+      "top1_prob_min": 0.9999999951189171,
+      "top1_prob_median": 1.0,
+      "top1_prob_max": 1.0,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "all features 5x train max",
+      "input": [
+        700.0,
+        725.0,
+        1025.0,
+        218.38,
+        499.91,
+        49.68,
+        1492.8
+      ],
+      "top1_prob_min": 1.0,
+      "top1_prob_median": 1.0,
+      "top1_prob_max": 1.0,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "N = 3x train max, rest median",
+      "input": [
+        420.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9999725648459996,
+      "top1_prob_median": 0.9999999984232799,
+      "top1_prob_max": 0.9999999999834916,
+      "predicted_classes_across_folds": [
+        "cotton"
+      ]
+    },
+    {
+      "probe": "P = 3x train max, rest median",
+      "input": [
+        37.0,
+        435.0,
+        32.0,
+        25.6,
+        80.47,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.6874132735927674,
+      "top1_prob_median": 0.999591759830766,
+      "top1_prob_max": 0.9999998709690356,
+      "predicted_classes_across_folds": [
+        "banana"
+      ]
+    },
+    {
+      "probe": "K = 3x train max, rest median",
+      "input": [
+        37.0,
+        51.0,
+        615.0,
+        25.6,
+        80.47,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9999998971277121,
+      "top1_prob_median": 0.9999999874750708,
+      "top1_prob_max": 0.9999999999999272,
+      "predicted_classes_across_folds": [
+        "grapes"
+      ]
+    },
+    {
+      "probe": "temperature = 3x train max, rest median",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        131.03,
+        80.47,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9999999353517104,
+      "top1_prob_median": 0.99999999980059,
+      "top1_prob_max": 0.9999999999999967,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "humidity = 3x train max, rest median",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        299.95,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9990279613864688,
+      "top1_prob_median": 0.9999999999874172,
+      "top1_prob_max": 1.0,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "ph = 3x train max, rest median",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        29.81,
+        94.87
+      ],
+      "top1_prob_min": 0.9939405927429523,
+      "top1_prob_median": 0.9999999999999896,
+      "top1_prob_max": 1.0,
+      "predicted_classes_across_folds": [
+        "grapes",
+        "mothbeans"
+      ]
+    },
+    {
+      "probe": "rainfall = 3x train max, rest median",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        6.43,
+        895.68
+      ],
+      "top1_prob_min": 0.9999999993246829,
+      "top1_prob_median": 0.9999999999990572,
+      "top1_prob_max": 0.9999999999999925,
+      "predicted_classes_across_folds": [
+        "rice"
+      ]
+    },
+    {
+      "probe": "pH = 0 (impossible)",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        0.0,
+        94.87
+      ],
+      "top1_prob_min": 0.5292007821346488,
+      "top1_prob_median": 0.9473468677799779,
+      "top1_prob_max": 0.9786554589655375,
+      "predicted_classes_across_folds": [
+        "grapes",
+        "mothbeans",
+        "pigeonpeas"
+      ]
+    },
+    {
+      "probe": "pH = 14 (impossible)",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        14.0,
+        94.87
+      ],
+      "top1_prob_min": 0.7361493319193639,
+      "top1_prob_median": 0.9996491765152701,
+      "top1_prob_max": 0.9999963708126876,
+      "predicted_classes_across_folds": [
+        "grapes",
+        "mothbeans"
+      ]
+    },
+    {
+      "probe": "temperature = 60 C",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        60.0,
+        80.47,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9980863151350288,
+      "top1_prob_median": 0.999765637001399,
+      "top1_prob_max": 0.9999989859698182,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "humidity = 150 % (impossible)",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        150.0,
+        6.43,
+        94.87
+      ],
+      "top1_prob_min": 0.9904126528619578,
+      "top1_prob_median": 0.9999812962557524,
+      "top1_prob_max": 0.9999999554142986,
+      "predicted_classes_across_folds": [
+        "papaya"
+      ]
+    },
+    {
+      "probe": "rainfall = 3000 mm",
+      "input": [
+        37.0,
+        51.0,
+        32.0,
+        25.6,
+        80.47,
+        6.43,
+        3000.0
+      ],
+      "top1_prob_min": 1.0,
+      "top1_prob_median": 1.0,
+      "top1_prob_max": 1.0,
+      "predicted_classes_across_folds": [
+        "rice"
+      ]
+    }
+  ],
+  "runtime_seconds": 140.5
+}
