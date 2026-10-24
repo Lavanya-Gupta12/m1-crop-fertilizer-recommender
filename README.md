@@ -9,6 +9,8 @@ Module M1 of the Smart Crop Advisory System (SIH25010).
   labelled with the tier it came from.
 - **Every answer includes** input-range warnings, an "uncertain" flag and SHAP reasons.
 
+**Run it in Colab:** [notebooks/M1_colab.ipynb](https://colab.research.google.com/github/Lavanya-Gupta12/m1-crop-fertilizer-recommender/blob/main/notebooks/M1_colab.ipynb). It's a self-contained walkthrough with all model code inline. `QUICK_MODE` gives a fast demo; full mode reproduces `RESULTS.md`.
+
 **Report:** [`notebooks/M1_final.ipynb`](notebooks/M1_final.ipynb), also as
 [HTML](notebooks/M1_final.html) and [PDF](notebooks/M1_final.pdf).
 
