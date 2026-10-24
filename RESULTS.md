@@ -356,3 +356,65 @@ request. Headless check: page served with HTTP 200. Full smoke output:
 The fertilizer reasons for the rice-like and chickpea-like inputs are identical
 (N +0.24, P −0.10, K −0.07). Both inputs exceed the RF's highest N/P/K split points, so they fall
 into the same leaves. This is another symptom of the stage-2 range mismatch.
+
+---
+
+## Decision: neural networks for both stages — 2026-10-25
+
+Project-owner decision (scope is deep learning). Stage 1 stays the MLP ensemble + TS (Task 1).
+Stage 2 is switched back to the embedding NN. **RandomForest and LightGBM are kept as
+benchmark results only.** Full reasoning: `docs/architecture.md`.
+
+What the benchmark shows, stated plainly:
+- **Stage 1: tree models beat the NN in all 5 folds.** RF +0.0145 and LightGBM +0.0109
+  accuracy over the single MLP, several times the fold std. LightGBM is also better calibrated
+  (NLL 0.031 vs 0.055 for the deployed ensemble+TS). Keeping the NN costs about 1.3 points of
+  accuracy (deployed 0.9823 vs RF 0.9950 in CV).
+- **Stage 2: RF vs embedding NN is within noise.** The paired differences (accuracy
+  +0.034 ± 0.059, macro-F1 +0.082 ± 0.135) are smaller than their split-to-split std, with
+  ~20-row test folds and overlapping splits. RF was ahead or tied in 14 of 15 splits on
+  accuracy, so the direction favours RF but the size is not measurable with 99 rows. The NN has
+  the better NLL in 15 of 15 splits.
+
+## Step 6 (revised) — deployed stage 2 = embedding NN, leak-free — 2026-10-25
+
+**Supersedes the RandomForest deployment above.** Command: `python scripts/train_stage2.py`
+(artifacts `models/fert_nn.keras`, `models/fert_nn_preprocessing.pkl`, `models/fert_config.json`;
+git-ignored).
+- **Model:** notebook embedding NN (3,272 params), code moved unchanged to `m1/stage2.py`.
+  The scaler and encoders are fit inside `FertNN.fit`.
+- **Training data: all 99 rows.** 40 epochs, batch 16, seed 42.
+- **Check:** the moved code reproduces benchmark split 1 exactly (accuracy 0.85, NLL 0.3186).
+- **Estimate:** the benchmark CV, **accuracy 0.9330 ± 0.0407, macro-F1 0.8451 ± 0.0835,
+  ECE 0.1839 ± 0.0360**, against a majority-class baseline of 0.2221 / 0.0518. Training
+  accuracy 1.000 is not an estimate.
+- **Guard:** the same stage-2 input-range guard as before.
+
+Smoke tests (`python scripts/smoke_test.py`, output `results/task1/smoke_test.txt`):
+
+| Input | Fertilizer (NN) | Confidence | Tier | Stage-2 range warnings |
+|---|---|---|---|---|
+| rice-like | 10-26-26 | 0.85 | 1 | temperature, humidity, N, K |
+| chickpea class mean | 10-26-26 | 1.00 | 2 | temperature, humidity, K, P |
+| mango class mean | – (no data) | – | none | – |
+
+**Extrapolation behaviour:** unlike the RF (≈0.27 confidence on the same inputs), the NN is
+highly confident far outside its training range. The chickpea answer is at 100%, with SHAP
+attributing +0.95 to K = 79.9 (training max 19). The range warning is the only safeguard here.
+
+## SHAP — fertilizer model re-run for the deployed NN — 2026-10-25
+
+Command: `python scripts/shap_summary.py` (plot `results/shap/fert_shap_mean_abs.png`; numbers
+`results/shap/shap_summary.json`). KernelExplainer on the deployed embedding NN. Inputs are the
+6 numerics + soil type + crop, with each categorical as a single feature. Background = 20 real
+rows (seed 42); nsamples 256 (exact enumeration for 8 features); 99 rows explained. Mean
+|SHAP| over rows and all 7 classes:
+
+| P | N | K | temperature | crop | Moisture | humidity | soil_type |
+|---|---|---|---|---|---|---|---|
+| 0.1164 | 0.1110 | 0.0895 | 0.0119 | 0.0090 | 0.0061 | 0.0043 | 0.0025 |
+
+Same picture as the RF: N/P/K drive the fertilizer choice; crop and soil type contribute
+little. The crop-model SHAP numbers are unchanged (re-run reproduced them exactly). The app's
+per-prediction fertilizer reason now uses Kernel SHAP on the NN (nsamples 256). App latency is
+0.10–0.64 s, and the headless check returned HTTP 200.

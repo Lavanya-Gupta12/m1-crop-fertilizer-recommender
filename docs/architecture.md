@@ -31,6 +31,8 @@ fold, seeds are fixed, and std uses ddof = 1.
 
 ### Benchmark: does the MLP earn its place? (stage 1, 5-fold, mean ± std)
 
+Trees are benchmark-only; the deployed stage-1 model is the MLP ensemble + TS (last row).
+
 | Model | Accuracy | Macro-F1 | ECE | NLL | Params / tree nodes | Train s/fold | Inference ms/row | SHAP |
 |---|---|---|---|---|---|---|---|---|
 | LogisticRegression | 0.9709 ± 0.0025 | 0.9707 ± 0.0025 | 0.1288 ± 0.0025 | 0.2102 ± 0.0141 | 176 | 0.12 | 0.003 | Linear (exact) |
@@ -41,18 +43,23 @@ fold, seeds are fixed, and std uses ddof = 1.
 
 \*Keras `predict()` overhead on one small batch, not compute cost.
 
-**Conclusion (stage 1): the NN does not win.**
-- **Accuracy:** RandomForest and LightGBM beat the MLP in 5 of 5 folds, by +1.45 and +1.09
-  points. The gap is several times the fold std.
+**Conclusion (stage 1): the NN does not win on accuracy or calibration.**
+- **Accuracy:** RandomForest and LightGBM beat the MLP in **5 of 5 folds**, by +1.45 and +1.09
+  points. The gap is several times the fold std, so it is not noise.
 - **Calibration:** LightGBM, untuned, is better calibrated than even the deployed
-  ensemble+TS (NLL 0.031 vs 0.055, lower in 5 of 5 folds vs the single MLP).
-- **What the NN still offers:** one architecture shared with stage 2, a much smaller model
-  (3.3k parameters vs 45–70k tree nodes) and smooth probabilities.
-- **Those advantages are not strong enough.** Shared architecture is a convenience, not a user
-  benefit. Tree models also get exact, fast TreeSHAP, while the NN needs approximate Kernel SHAP.
-- **Recommendation:** switch stage 1 to LightGBM, keeping the Task-1 machinery (calibration
-  check, input guard, uncertainty threshold, top-3). This has not been done yet: the app still
-  serves the MLP ensemble. It is a follow-up decision for the owner.
+  ensemble+TS (NLL 0.031 vs 0.055; lower than the single MLP in 5 of 5 folds).
+- **What the NN does offer:** a much smaller model (3.3k parameters vs 45–70k tree nodes), one
+  architecture for both stages, and well-behaved probabilities after temperature scaling.
+
+**Decision (project owner, 2026-10-25): keep the NN for both stages.**
+- The project scope is deep learning, so both stages stay neural networks. Stage 1 stays the
+  5-seed MLP ensemble + temperature scaling from Task 1.
+- RandomForest and LightGBM remain **benchmark results only**: they show what the data
+  supports and are reported, not hidden.
+- Cost of this decision: about 1–1.5 points of stage-1 accuracy (deployed ensemble 0.9823 vs
+  RF 0.9950 in CV) and approximate Kernel SHAP instead of exact TreeSHAP.
+- What it does not cost: calibration is handled (Task 1), and the range guard and uncertainty
+  flag work the same for any model.
 
 ## Stage 2: fertilizer model (numeric 6 + soil Embedding(5→2) + crop Embedding(11→5) → 64 → 32 → Softmax 7)
 
@@ -68,19 +75,31 @@ fold, seeds are fixed, and std uses ddof = 1.
 |---|---|---|---|---|---|---|
 | Majority class (baseline) | 0.2221 ± 0.0239 | 0.0518 ± 0.0045 | 0.7779 ± 0.0239 | 21.49 ± 0.66 | 0 | 0.00 |
 | RandomForest (one-hot, 300 trees) | **0.9667 ± 0.0408** | **0.9266 ± 0.0908** | 0.3415 ± 0.0293 | 0.4932 ± 0.0382 | 12,860 nodes | 0.57 |
-| Embedding NN (current) | 0.9330 ± 0.0407 | 0.8451 ± 0.0835 | **0.1839 ± 0.0360** | **0.2803 ± 0.0269** | 3,272 | 4.68 |
+| **Embedding NN (current, deployed)** | 0.9330 ± 0.0407 | 0.8451 ± 0.0835 | **0.1839 ± 0.0360** | **0.2803 ± 0.0269** | 3,272 | 4.68 |
 | One-hot NN (ablation) | 0.8821 ± 0.0700 | 0.8007 ± 0.1317 | 0.1924 ± 0.0476 | 0.4187 ± 0.0699 | 3,783 | 4.23 |
 
-**Conclusion (stage 2):**
-- **Accuracy and macro-F1:** RandomForest is best. Paired against the embedding NN it wins
-  8/6/1 splits on accuracy (+0.034) and 10/1/4 on macro-F1 (+0.082). With 20-row test folds the
-  spreads are wide (macro-F1 std ≈ 0.09), so the ranking is suggestive, not conclusive.
-- **Probabilities:** RandomForest's are strongly under-confident (mean confidence 0.64 vs
-  accuracy 0.97; ECE 0.34). The embedding NN has the best NLL in 15/15 splits.
-- **Deployment decision:** RandomForest, because accuracy and macro-F1 are the task metrics in
-  the deck. It is trained on all 99 rows as one pipeline, with preprocessing fit on its own
-  training data and the CV above as its estimate. Its confidence is shown as *uncalibrated*.
-  Calibrating it properly needs more data than 99 rows.
+**Conclusion (stage 2): the differences between RandomForest and the embedding NN are within
+noise.**
+- **Size of the gap:** RF − embedding NN is accuracy +0.034 ± 0.059 and macro-F1
+  +0.082 ± 0.135 (paired over 15 splits). Each mean difference is smaller than its
+  split-to-split std.
+- **Why it can't be settled:** the test folds have ~20 rows (one row = 5 accuracy points), and
+  the 15 splits reuse the same 99 rows, so they are not independent.
+- **Direction, stated for the record:** RF was ahead or tied on accuracy in 14 of 15 splits.
+  The direction favours RF, but the size of the gap cannot be told apart from noise with this
+  data.
+- **Probabilities:** the embedding NN has the better NLL in 15 of 15 splits (0.28 vs 0.49), and
+  RF is strongly under-confident (mean confidence 0.64 vs accuracy 0.97).
 - **Embeddings vs one-hot:** the earlier guess that one-hot "may do equally well" was wrong for
-  this NN. Embeddings are better on NLL in every split and usually on accuracy. Both NNs still
-  lose to the RandomForest on accuracy.
+  this NN. Embeddings are better on NLL in every split and usually on accuracy (9/4/2).
+
+**Deployed: the embedding NN** (project owner decision, deep-learning scope). It is retrained
+leak-free: the scaler and encoders are fit inside `FertNN.fit`, on all 99 rows. Its estimate is
+the CV above (accuracy 0.933 ± 0.041, macro-F1 0.845 ± 0.084), against a majority-class baseline
+of 0.222. RF is kept as a benchmark result only.
+
+**Caveat that matters more than the model choice.** Only 1.7% of realistic stage-1 inputs for
+Tier 1/2 crops fall inside the fertilizer data's range. Outside that range the NN extrapolates
+with *high* confidence: the chickpea smoke test gives 10-26-26 at 100%, driven by K = 79.9
+against a training max of 19. The RF plateaued at ~0.27 on the same input. The stage-2 range
+guard and the extrapolation warning in the UI are therefore essential, not cosmetic.

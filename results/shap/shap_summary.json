@@ -15,16 +15,16 @@
   },
   "fertilizer": {
     "explained_rows": 99,
-    "explainer": "TreeExplainer (exact), one-hot summed",
+    "explainer": "KernelExplainer, background = 20 random rows (seed 42), nsamples 256 (exact for 8 features)",
     "mean_abs_shap_by_feature": {
-      "P": 0.07722424374587311,
-      "N": 0.06778801874413551,
-      "K": 0.06292188266723303,
-      "crop": 0.017671028689384017,
-      "Moisture": 0.011572801623482596,
-      "temperature": 0.010969650186820723,
-      "soil_type": 0.01010227096133339,
-      "humidity": 0.009229879886661277
+      "P": 0.11637213918315373,
+      "N": 0.11098875169206938,
+      "K": 0.08954117534477334,
+      "temperature": 0.011859676180541906,
+      "crop": 0.008967516896177084,
+      "Moisture": 0.006063490615653209,
+      "humidity": 0.004264316211101561,
+      "soil_type": 0.0025177922260320577
     }
   }
 }

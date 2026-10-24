@@ -4,23 +4,23 @@ stage-2 range check on 1000 crop-data rows of Tier 1/2 crops: all 5 features ins
 
 ## rice-like (reference smoke test), Clayey soil, moisture 45
   status=ok  top3: rice 89.6%, jute 10.4%, papaya 0.0%
-  fertilizer: Urea conf=0.29 tier=1 | Tier 1: ML model trained on 'rice' rows.
+  fertilizer: 10-26-26 conf=0.85 tier=1 | Tier 1: ML model trained on 'rice' rows.
   fertilizer warning: temperature=20.8 is outside the training range [25, 38]
   fertilizer warning: humidity=82 is outside the training range [50, 72]
   fertilizer warning: N=90 is outside the training range [4, 42]
   fertilizer warning: K=43 is outside the training range [0, 19]
   reason (crop): Top drivers for 'rice' (SHAP, change in probability vs. a typical input): rainfall +0.28, temperature +0.17, humidity +0.10
-  reason (fertilizer): Top drivers for 'Urea' (SHAP, change in probability vs. a typical input): N +0.24, P -0.10, K -0.07
+  reason (fertilizer): Top drivers for '10-26-26' (SHAP, change in probability vs. a typical input): K +0.75, N -0.16, P +0.13
 
 ## pulses-like (chickpea class mean from the data: [40.1, 67.8, 79.9, 18.9, 16.9, 7.3, 80.1]), Loamy, moisture 40
   status=ok  top3: chickpea 100.0%, kidneybeans 0.0%, grapes 0.0%
-  fertilizer: Urea conf=0.27 tier=2 | Tier 2: proxy via crop group - 'chickpea' answered with the 'pulses' rows of the fertilizer dataset (assumption, not crop-specific data).
+  fertilizer: 10-26-26 conf=1.00 tier=2 | Tier 2: proxy via crop group - 'chickpea' answered with the 'pulses' rows of the fertilizer dataset (assumption, not crop-specific data).
   fertilizer warning: temperature=18.9 is outside the training range [25, 38]
   fertilizer warning: humidity=16.9 is outside the training range [50, 72]
   fertilizer warning: K=79.9 is outside the training range [0, 19]
   fertilizer warning: P=67.8 is outside the training range [0, 42]
   reason (crop): Top drivers for 'chickpea' (SHAP, change in probability vs. a typical input): humidity +0.46, K +0.29, rainfall +0.06
-  reason (fertilizer): Top drivers for 'Urea' (SHAP, change in probability vs. a typical input): N +0.24, P -0.10, K -0.07
+  reason (fertilizer): Top drivers for '10-26-26' (SHAP, change in probability vs. a typical input): K +0.95, P -0.05, humidity -0.02
 
 ## no-data crop (mango class mean: [20.1, 27.2, 29.9, 31.2, 50.2, 5.8, 94.7]), Loamy, moisture 40
   status=ok  top3: mango 100.0%, mothbeans 0.0%, pigeonpeas 0.0%

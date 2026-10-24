@@ -1,12 +1,12 @@
 """M1 inference: load saved artifacts once, then `recommend()` is a plain function.
 
 Stage 1: calibrated crop ranking (top-3), input-range guard, low-confidence flag.
-Stage 2: fertilizer for the top-1 crop via the tier mapping (m1/tiers.py), RandomForest
-         pipeline, with its own input-range guard.
+Stage 2: fertilizer for the top-1 crop via the tier mapping (m1/tiers.py), embedding NN
+         (m1/stage2.py), with its own input-range guard.
 
 Artifacts (models/): crop_config.json, crop_preprocessors.pkl, crop_model*.keras,
-fert_config.json, fert_rf.joblib. Produced by `scripts/task1_calibration.py final` and
-`scripts/train_stage2.py`.
+fert_config.json, fert_nn.keras, fert_nn_preprocessing.pkl, shap_background.npz. Produced by
+`scripts/task1_calibration.py final`, `scripts/train_stage2.py`, `scripts/shap_summary.py`.
 """
 import json
 import pickle
@@ -50,9 +50,9 @@ class M1Recommender:
 
         self.fert_model = None
         if (d / "fert_config.json").exists():
-            import joblib
+            from m1.stage2 import FertNN
             self.fert_cfg = json.loads((d / "fert_config.json").read_text())
-            self.fert_model = joblib.load(d / self.fert_cfg["model_file"])
+            self.fert_model = FertNN.load(d, self.fert_cfg["model_stem"])
             fg = self.fert_cfg["guard"]
             self.fert_guard = InputGuard(fg["feature_names"], fg["margin"])
             self.fert_guard.lower_, self.fert_guard.upper_ = np.array(fg["lower"]), np.array(fg["upper"])
@@ -67,6 +67,24 @@ class M1Recommender:
         row = dict(zip(self.fert_cfg["num_cols"], [temperature, humidity, moisture, N, K, P]))
         row.update({"soil_type": soil_type, "label": fert_crop})
         return pd.DataFrame([row])[self.fert_cfg["num_cols"] + self.fert_cfg["cat_cols"]]
+
+    # stage-2 inputs as one numeric matrix [6 numerics, soil id, crop id] - used by Kernel SHAP
+    @property
+    def fert_feature_names(self):
+        return self.fert_cfg["num_cols"] + ["soil_type", "crop"]
+
+    def fert_encode(self, frame):
+        m = self.fert_model
+        return np.column_stack([frame[self.fert_cfg["num_cols"]].values.astype(float),
+                                m.soil_enc.transform(frame["soil_type"]), m.crop_enc.transform(frame["label"])])
+
+    def fert_probs_encoded(self, Z):
+        import pandas as pd
+        m, Z = self.fert_model, np.atleast_2d(Z)
+        frame = pd.DataFrame(Z[:, :6], columns=self.fert_cfg["num_cols"])
+        frame["soil_type"] = m.soil_enc.classes_[np.rint(Z[:, 6]).astype(int)]
+        frame["label"] = m.crop_enc.classes_[np.rint(Z[:, 7]).astype(int)]
+        return m.predict_proba_fast(frame)
 
     # ---------------------------------------------------------------- stage 1
     def crop_probs(self, x_raw):
@@ -94,13 +112,13 @@ class M1Recommender:
             return {**base, "note": "Fertilizer model not loaded."}
         if soil_type not in set(self.fert_cfg["soil_types"]):
             return {**base, "note": f"Unknown soil type '{soil_type}'."}
-        probs = self.fert_model.predict_proba(
+        probs = self.fert_model.predict_proba_fast(
             self.fert_frame(temperature, humidity, moisture, N, K, P, soil_type, fert_crop))[0]
-        return {**base, "fertilizer": str(self.fert_model.classes_[probs.argmax()]),
+        return {**base, "fertilizer": str(self.fert_cfg["classes"][probs.argmax()]),
                 "confidence": float(probs.max()),
                 "warnings": self.fert_guard.check([temperature, humidity, moisture, N, K, P]),
-                "note": ("Confidence is uncalibrated (RandomForest on 99 rows; under-confident in CV: "
-                         "accuracy 0.97 vs mean confidence 0.64).")}
+                "note": ("Confidence is uncalibrated (embedding NN on 99 rows; under-confident in CV: "
+                         "accuracy 0.93 vs mean confidence 0.80).")}
 
     # ---------------------------------------------------------------- explanations
     @staticmethod
@@ -120,21 +138,14 @@ class M1Recommender:
         return self._format_reason(self.cfg["feature_names"], np.asarray(sv)[0], self.classes[class_idx])
 
     def fert_reason(self, frame, fert_label):
-        """Exact TreeSHAP for the fertilizer RandomForest; one-hot columns summed per input."""
+        """Kernel SHAP for the fertilizer NN, one value per input (soil type and crop as whole features)."""
         import shap
-        pre, clf = self.fert_model.named_steps["pre"], self.fert_model.named_steps["clf"]
-        if not hasattr(self, "_fert_explainer"):
-            self._fert_explainer = shap.TreeExplainer(clf)
-        Xt = pre.transform(frame)
-        Xt = Xt.toarray() if hasattr(Xt, "toarray") else Xt
-        k = list(clf.classes_).index(fert_label)
-        sv = np.asarray(self._fert_explainer.shap_values(Xt))[0, :, k]
-        cols = pre.get_feature_names_out()
-        names = self.fert_cfg["num_cols"] + ["soil_type", "crop"]
-        vals = [sv[[i for i, c in enumerate(cols) if c == f"num__{n}"]].sum() for n in self.fert_cfg["num_cols"]]
-        vals += [sv[[i for i, c in enumerate(cols) if c.startswith("cat__soil_type_")]].sum(),
-                 sv[[i for i, c in enumerate(cols) if c.startswith("cat__label_")]].sum()]
-        return self._format_reason(names, np.array(vals), fert_label)
+        if not hasattr(self, "_fert_bg"):
+            self._fert_bg = np.load(self.models_dir / "shap_background.npz")["fert_background"]
+        k = self.fert_cfg["classes"].index(fert_label)
+        f = lambda Z: self.fert_probs_encoded(Z)[:, k]                         # noqa: E731
+        sv = shap.KernelExplainer(f, self._fert_bg).shap_values(self.fert_encode(frame), nsamples=256, silent=True)
+        return self._format_reason(self.fert_feature_names, np.asarray(sv)[0], fert_label)
 
     # ---------------------------------------------------------------- public API
     def recommend(self, N, P, K, temperature, humidity, ph, rainfall, soil_type=None, moisture=None,
