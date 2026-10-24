@@ -28,10 +28,13 @@ def gradio_predict(N, P, K, temperature, humidity, ph, rainfall, soil_type, mois
                f"{out['model']['uncertain_threshold']:.0%}.</sub>")
 
     f = out["fertilizer"]
-    if f is None or f["fertilizer"] is None:
-        fert_text = f["note"] if f else "Enter soil type and moisture for a fertilizer recommendation."
+    if f is None:
+        fert_text = "Enter soil type and moisture for a fertilizer recommendation."
+    elif f["fertilizer"] is None:
+        fert_text = " ".join(s for s in (f["provenance"], f["note"]) if s)
     else:
-        fert_text = f"{f['fertilizer']} ({f['confidence']:.1%}, for {out['top3'][0]['crop']}). {f['note']}"
+        fert_text = (f"{f['fertilizer']} ({f['confidence']:.1%}, for {out['top3'][0]['crop']}). "
+                     f"{f['provenance']} {f['note']}")
     return crops, status, fert_text
 
 

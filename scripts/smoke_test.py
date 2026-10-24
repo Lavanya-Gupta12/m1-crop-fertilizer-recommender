@@ -26,8 +26,9 @@ def show(name, out):
         print(f"  message: {out['message']}")
     for w in out["warnings"]:
         print(f"  warning: {w}")
-    if out["fertilizer"]:
-        print(f"  fertilizer: {out['fertilizer']}")
+    f = out["fertilizer"]
+    if f:
+        print(f"  fertilizer: {f['fertilizer']} conf={f['confidence']} tier={f['tier']} | {f['provenance']}")
 
 
 def main():
@@ -41,6 +42,11 @@ def main():
     saved = json.loads((ROOT / "results" / "task1" / "final.json").read_text())["test_metrics"]["accuracy"]
     print(f"reloaded test accuracy={acc:.4f} (final.json: {saved:.4f}) match={abs(acc - saved) < 1e-9}")
 
+    from m1 import tiers
+    cov = tiers.coverage(enc.classes_)
+    print("tier coverage:", {k: f"{len(v)}/{len(enc.classes_)} {v}" for k, v in cov.items()})
+
+    mango_mean = df.loc[df["label"] == "mango", NUM_COLS_CROP].mean().round(1).tolist()
     chickpea_mean = df.loc[df["label"] == "chickpea", NUM_COLS_CROP].mean().round(1).tolist()
     cases = {
         "rice-like (reference smoke test), Clayey soil, moisture 45":
@@ -48,6 +54,9 @@ def main():
                  soil_type="Clayey", moisture=45),
         f"pulses-like (chickpea class mean from the data: {chickpea_mean}), Loamy, moisture 40":
             dict(zip(["N", "P", "K", "temperature", "humidity", "ph", "rainfall"], chickpea_mean),
+                 soil_type="Loamy", moisture=40),
+        f"no-data crop (mango class mean: {mango_mean}), Loamy, moisture 40":
+            dict(zip(["N", "P", "K", "temperature", "humidity", "ph", "rainfall"], mango_mean),
                  soil_type="Loamy", moisture=40),
         "all zeros": dict(N=0, P=0, K=0, temperature=0, humidity=0, ph=0, rainfall=0),
         "pH = 14, otherwise rice-like": dict(N=90, P=42, K=43, temperature=20.8, humidity=82, ph=14, rainfall=202),

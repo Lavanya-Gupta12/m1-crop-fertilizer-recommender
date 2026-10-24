@@ -214,3 +214,24 @@ Loading the artifacts from disk reproduces the test accuracy in `final.json` exa
 
 All-zeros is flagged on temperature, humidity and pH only, because N = 0 is inside the
 training range and P = K = 0 fall inside the 10% margin.
+
+---
+
+## Task 2 — fertilizer coverage tiers — 2026-10-25
+
+Command: `python scripts/smoke_test.py` (prints tier coverage). Mapping in `m1/tiers.py`;
+the assumption is documented in `docs/fertilizer_tiers.md`. No model or metric changes.
+
+| Tier | Stage-1 crops | Count | Share of 22 crops (= share of stage-1 rows; 100 rows/crop) |
+|---|---|---|---|
+| 1: ML model, crop in fertilizer data | rice, maize, cotton | 3 | 13.6% |
+| 2: ML model via the `pulses` group proxy | chickpea, kidneybeans, pigeonpeas, mothbeans, mungbean, blackgram, lentil | 7 | 31.8% |
+| none: "No verified fertilizer data" | apple, banana, coconut, coffee, grapes, jute, mango, muskmelon, orange, papaya, pomegranate, watermelon | 12 | 54.5% |
+
+Total coverage: 10/22 crops (45.5%). Fertilizer-data rows behind each tier: rice 10, maize 6,
+cotton 12, pulses 10 (spread across 6 of the 7 fertilizer classes). No end-to-end accuracy is
+reported (not computable; see docs). Tier-2 accuracy cannot be measured: the data has no
+per-pulse labels.
+
+Smoke test: rice-like → Tier 1 (10-26-26); chickpea class mean → Tier 2 (10-26-26, 99.99%
+uncalibrated); mango class mean → no data.

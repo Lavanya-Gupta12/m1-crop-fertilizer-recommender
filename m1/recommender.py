@@ -73,19 +73,22 @@ class M1Recommender:
 
     # ---------------------------------------------------------------- stage 2
     def fertilizer(self, crop, temperature, humidity, moisture, N, K, P, soil_type):
+        from m1 import tiers
+        tier, fert_crop, provenance = tiers.resolve(crop)
+        base = {"fertilizer": None, "confidence": None, "tier": tier, "fert_crop": fert_crop,
+                "provenance": provenance, "note": None}
+        if tier is None:
+            return base
         if self.fert_model is None:
-            return {"fertilizer": None, "confidence": None, "note": "Fertilizer model not loaded."}
+            return {**base, "note": "Fertilizer model not loaded."}
         pre = self.fert_pre
-        if crop not in set(pre["fert_crop_encoder"].classes_):
-            return {"fertilizer": None, "confidence": None,
-                    "note": f"No fertilizer data available for '{crop}': the fertilizer dataset doesn't cover this crop."}
         if soil_type not in set(pre["soil_encoder"].classes_):
-            return {"fertilizer": None, "confidence": None, "note": f"Unknown soil type '{soil_type}'."}
+            return {**base, "note": f"Unknown soil type '{soil_type}'."}
         xn = pre["scaler_fert"].transform([[temperature, humidity, moisture, N, K, P]])
         probs = np.asarray(self.fert_model.predict(
-            [xn, pre["soil_encoder"].transform([soil_type]), pre["fert_crop_encoder"].transform([crop])],
+            [xn, pre["soil_encoder"].transform([soil_type]), pre["fert_crop_encoder"].transform([fert_crop])],
             verbose=0))[0]
-        return {"fertilizer": str(pre["fert_encoder"].classes_[probs.argmax()]),
+        return {**base, "fertilizer": str(pre["fert_encoder"].classes_[probs.argmax()]),
                 "confidence": float(probs.max()),
                 "note": "Uncalibrated stage-2 confidence (notebook model; 99 training rows)."}
 
