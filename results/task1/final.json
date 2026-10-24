@@ -1,0 +1,176 @@
+{
+  "variant": "E_ensemble5+TS",
+  "temperature": 0.6455386820648308,
+  "threshold": 0.75,
+  "n_test": 440,
+  "test_metrics": {
+    "accuracy": 0.9840909090909091,
+    "macro_f1": 0.9840237843641134,
+    "ece": 0.014985169680988248,
+    "nll": 0.03775044462532114,
+    "brier": 0.022091973134172334,
+    "mean_confidence": 0.9785244878925777
+  },
+  "test_metrics_A_same_split": {
+    "accuracy": 0.9772727272727273,
+    "macro_f1": 0.9771207514234704,
+    "ece": 0.015756895758781506,
+    "nll": 0.05798052271180204,
+    "brier": 0.03206069511350788,
+    "mean_confidence": 0.9644588388482149
+  },
+  "test_at_threshold": {
+    "coverage": 0.9659090909090909,
+    "accuracy_accepted": 0.9952941176470588,
+    "n_flagged_uncertain": 15
+  },
+  "oof_coverage_curve": [
+    {
+      "threshold": 0.3,
+      "coverage": 1.0,
+      "accuracy_accepted": 0.9822727272727273,
+      "accuracy_flagged": null,
+      "n_flagged": 0
+    },
+    {
+      "threshold": 0.35,
+      "coverage": 1.0,
+      "accuracy_accepted": 0.9822727272727273,
+      "accuracy_flagged": null,
+      "n_flagged": 0
+    },
+    {
+      "threshold": 0.4,
+      "coverage": 1.0,
+      "accuracy_accepted": 0.9822727272727273,
+      "accuracy_flagged": null,
+      "n_flagged": 0
+    },
+    {
+      "threshold": 0.45,
+      "coverage": 1.0,
+      "accuracy_accepted": 0.9822727272727273,
+      "accuracy_flagged": null,
+      "n_flagged": 0
+    },
+    {
+      "threshold": 0.5,
+      "coverage": 1.0,
+      "accuracy_accepted": 0.9822727272727273,
+      "accuracy_flagged": null,
+      "n_flagged": 0
+    },
+    {
+      "threshold": 0.55,
+      "coverage": 0.9927272727272727,
+      "accuracy_accepted": 0.9839743589743589,
+      "accuracy_flagged": 0.75,
+      "n_flagged": 16
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.9872727272727273,
+      "accuracy_accepted": 0.9852670349907919,
+      "accuracy_flagged": 0.75,
+      "n_flagged": 28
+    },
+    {
+      "threshold": 0.65,
+      "coverage": 0.9827272727272728,
+      "accuracy_accepted": 0.9861239592969473,
+      "accuracy_flagged": 0.7631578947368421,
+      "n_flagged": 38
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.9763636363636363,
+      "accuracy_accepted": 0.9874301675977654,
+      "accuracy_flagged": 0.7692307692307693,
+      "n_flagged": 52
+    },
+    {
+      "threshold": 0.75,
+      "coverage": 0.9668181818181818,
+      "accuracy_accepted": 0.9901269393511989,
+      "accuracy_flagged": 0.7534246575342466,
+      "n_flagged": 73
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.96,
+      "accuracy_accepted": 0.9928977272727273,
+      "accuracy_flagged": 0.7272727272727273,
+      "n_flagged": 88
+    },
+    {
+      "threshold": 0.85,
+      "coverage": 0.9477272727272728,
+      "accuracy_accepted": 0.9932853717026379,
+      "accuracy_flagged": 0.782608695652174,
+      "n_flagged": 115
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.9313636363636364,
+      "accuracy_accepted": 0.995119570522206,
+      "accuracy_flagged": 0.8079470198675497,
+      "n_flagged": 151
+    },
+    {
+      "threshold": 0.95,
+      "coverage": 0.9022727272727272,
+      "accuracy_accepted": 0.996977329974811,
+      "accuracy_flagged": 0.8465116279069768,
+      "n_flagged": 215
+    }
+  ],
+  "target_selective_accuracy": 0.99,
+  "guard": {
+    "feature_names": [
+      "N",
+      "P",
+      "K",
+      "temperature",
+      "humidity",
+      "ph",
+      "rainfall"
+    ],
+    "margin": 0.1,
+    "lower": [
+      -14.0,
+      -9.0,
+      -15.0,
+      5.3406929145,
+      5.6856561899999996,
+      2.8617184723999998,
+      -7.623617533000001
+    ],
+    "upper": [
+      154.0,
+      159.0,
+      225.0,
+      47.1604748805,
+      108.55425962999999,
+      10.5781245716,
+      326.395002503
+    ],
+    "train_min": [
+      0.0,
+      5.0,
+      5.0,
+      8.825674745,
+      14.25803981,
+      3.504752314,
+      20.21126747
+    ],
+    "train_max": [
+      140.0,
+      145.0,
+      205.0,
+      43.67549305,
+      99.98187601,
+      9.93509073,
+      298.5601175
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+reloaded test accuracy=0.9841 (final.json: 0.9841) match=True
+
+## rice-like (reference smoke test), Clayey soil, moisture 45
+  status=ok  top3: rice 89.6%, jute 10.4%, papaya 0.0%
+  fertilizer: {'fertilizer': '10-26-26', 'confidence': 0.7073115110397339, 'note': 'Uncalibrated stage-2 confidence (notebook model; 99 training rows).'}
+
+## pulses-like (chickpea class mean from the data: [40.1, 67.8, 79.9, 18.9, 16.9, 7.3, 80.1]), Loamy, moisture 40
+  status=ok  top3: chickpea 100.0%, kidneybeans 0.0%, grapes 0.0%
+  fertilizer: {'fertilizer': None, 'confidence': None, 'note': "No fertilizer data available for 'chickpea': the fertilizer dataset doesn't cover this crop."}
+
+## all zeros
+  status=out_of_range  top3: mothbeans 99.8%, maize 0.2%, kidneybeans 0.0%
+  message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
+  warning: temperature=0 is outside the training range [8.82567, 43.6755]
+  warning: humidity=0 is outside the training range [14.258, 99.9819]
+  warning: ph=0 is outside the training range [3.50475, 9.93509]
+
+## pH = 14, otherwise rice-like
+  status=out_of_range  top3: jute 99.9%, rice 0.0%, cotton 0.0%
+  message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
+  warning: ph=14 is outside the training range [3.50475, 9.93509]
+
+## rainfall = 3000 mm, otherwise rice-like
+  status=out_of_range  top3: rice 100.0%, watermelon 0.0%, pomegranate 0.0%
+  message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
+  warning: rainfall=3000 is outside the training range [20.2113, 298.56]
+
+## humidity = 150 %, temperature = 60 C
+  status=out_of_range  top3: papaya 100.0%, jute 0.0%, rice 0.0%
+  message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
+  warning: temperature=60 is outside the training range [8.82567, 43.6755]
+  warning: humidity=150 is outside the training range [14.258, 99.9819]
