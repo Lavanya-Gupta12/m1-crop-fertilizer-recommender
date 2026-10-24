@@ -14,3 +14,6 @@ data/
 *.joblib
 models/
 results/**/*.npz
+
+# local-only files
+.gradio/
