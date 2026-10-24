@@ -235,3 +235,49 @@ per-pulse labels.
 
 Smoke test: rice-like → Tier 1 (10-26-26); chickpea class mean → Tier 2 (10-26-26, 99.99%
 uncalibrated); mango class mean → no data.
+
+---
+
+## Tasks 3+4 — benchmark (both stages) — 2026-10-25
+
+Command: `python scripts/benchmark.py` (WSL, TF 2.21 backend, LightGBM 4.7.0, scikit-learn 1.9.1;
+outputs `results/benchmark/benchmark.json`, `results/benchmark/benchmark_tables.md`). Runtime 231 s.
+No hyperparameter search; every model uses defaults or the notebook's settings. Write-up and
+conclusions: `docs/architecture.md`.
+
+**Stage 1:** stratified 5-fold (`random_state=42`, same outer folds as Task 1), scaler inside
+each fold. **Training data: 100% of each training fold (80% of rows).** MLP: 40 epochs, batch
+16, seed 42+fold, single model (no ensemble/TS).
+
+| Model | Accuracy | Macro-F1 | ECE | NLL | Params / tree nodes | Train s/fold | Infer ms/row |
+|---|---|---|---|---|---|---|---|
+| LogisticRegression | 0.9709 ± 0.0025 | 0.9707 ± 0.0025 | 0.1288 ± 0.0025 | 0.2102 ± 0.0141 | 176 | 0.12 ± 0.02 | 0.003 |
+| RandomForest (300 trees) | 0.9950 ± 0.0030 | 0.9950 ± 0.0030 | 0.0413 ± 0.0029 | 0.0518 ± 0.0018 | 45,484 | 0.96 ± 0.02 | 0.310 |
+| LightGBM (defaults) | 0.9914 ± 0.0019 | 0.9913 ± 0.0019 | 0.0083 ± 0.0027 | 0.0312 ± 0.0096 | 70,672 | 0.71 ± 0.10 | 0.042 |
+| MLP 64-32 (current) | 0.9805 ± 0.0038 | 0.9804 ± 0.0039 | 0.0166 ± 0.0047 | 0.0581 ± 0.0092 | 3,318 | 11.42 ± 0.21 | 0.502 |
+
+Paired over the 5 folds: RF − MLP accuracy +0.0145 ± 0.0026 (5/5 folds); LightGBM − MLP
++0.0109 ± 0.0054 (5/5); RF − LightGBM +0.0036 ± 0.0041 (4/5). LightGBM NLL < MLP NLL in 5/5
+folds. **The tree models beat the MLP on accuracy. LightGBM is also the best calibrated (ECE
+and NLL), better even than the deployed MLP ensemble+TS (Task 1: NLL 0.0550 ± 0.0095).**
+
+**Stage 2:** repeated stratified 5-fold × 3 (`random_state=42`), 99 rows, test folds of 19–20
+rows. Preprocessing (scaler, one-hot, label encoders) is fit inside each training fold.
+**Training data: 80% of rows per split.** NNs: 40 epochs, batch 16, seed 42+split, no
+`validation_split`.
+
+| Model | Accuracy | Macro-F1 | ECE | NLL | Params / tree nodes | Train s/fold |
+|---|---|---|---|---|---|---|
+| Majority class (baseline) | 0.2221 ± 0.0239 | 0.0518 ± 0.0045 | 0.7779 ± 0.0239 | 21.4940 ± 0.6606 | 0 | 0.00 |
+| RandomForest (one-hot, 300 trees) | 0.9667 ± 0.0408 | 0.9266 ± 0.0908 | 0.3415 ± 0.0293 | 0.4932 ± 0.0382 | 12,860 | 0.57 ± 0.07 |
+| Embedding NN (current) | 0.9330 ± 0.0407 | 0.8451 ± 0.0835 | 0.1839 ± 0.0360 | 0.2803 ± 0.0269 | 3,272 | 4.68 ± 0.77 |
+| One-hot NN | 0.8821 ± 0.0700 | 0.8007 ± 0.1317 | 0.1924 ± 0.0476 | 0.4187 ± 0.0699 | 3,783 | 4.23 ± 0.45 |
+
+Paired over the 15 splits (difference ± std; wins/ties/losses for the first model):
+- RF − embedding NN: accuracy +0.0337 ± 0.0589 (8/6/1), macro-F1 +0.0815 ± 0.1353 (10/1/4),
+  NLL +0.2130 ± 0.0364 (RF worse in 15/15).
+- Embedding − one-hot NN: accuracy +0.0509 ± 0.1004 (9/4/2), macro-F1 +0.0444 ± 0.1817
+  (7/3/5), NLL −0.1384 ± 0.0600 (embedding better in 15/15).
+
+Mean top-1 confidence: RF 0.643 (accuracy 0.967, so strongly under-confident), embedding NN
+0.799, one-hot NN 0.731.
