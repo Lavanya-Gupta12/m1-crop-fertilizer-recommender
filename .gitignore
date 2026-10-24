@@ -1,0 +1,16 @@
+# environment
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# data (downloaded via kagglehub, or placed here manually)
+data/
+
+# saved models / preprocessors
+*.keras
+*.h5
+*.pkl
+*.joblib
+models/
+results/**/*.npz
