@@ -29,13 +29,21 @@ def gradio_predict(N, P, K, temperature, humidity, ph, rainfall, soil_type, mois
 
     f = out["fertilizer"]
     if f is None:
-        fert_text = "Enter soil type and moisture for a fertilizer recommendation."
-    elif f["fertilizer"] is None:
-        fert_text = " ".join(s for s in (f["provenance"], f["note"]) if s)
+        fert_md = "Enter soil type and moisture for a fertilizer recommendation."
     else:
-        fert_text = (f"{f['fertilizer']} ({f['confidence']:.1%}, for {out['top3'][0]['crop']}). "
-                     f"{f['provenance']} {f['note']}")
-    return crops, status, fert_text
+        tier = {1: "Tier 1 (ML model)", 2: "Tier 2 (crop-group proxy)"}.get(f["tier"], "No data")
+        if f["fertilizer"] is None:
+            fert_md = f"**{tier}** for {out['top3'][0]['crop']}. " + " ".join(s for s in (f["provenance"], f["note"]) if s)
+        else:
+            fert_md = (f"**{f['fertilizer']}** for {out['top3'][0]['crop']} ({f['confidence']:.0%})  \n"
+                       f"**Source: {tier}.** {f['provenance']}  \n<sub>{f['note']}</sub>")
+            if f["warnings"]:
+                fert_md += ("\n\n**Fertilizer inputs outside the fertilizer data's range** "
+                            "(the answer is an extrapolation):\n" + "\n".join(f"- {w}" for w in f["warnings"]))
+
+    r = out["reasons"]
+    reason_md = "\n\n".join(f"**{k.capitalize()}:** {v}" for k, v in (("crop", r["crop"]), ("fertilizer", r["fertilizer"])) if v)
+    return crops, status, fert_md, reason_md
 
 
 def build_demo():
@@ -55,7 +63,8 @@ def build_demo():
         ],
         outputs=[gr.Label(num_top_classes=3, label="Top-3 crops (calibrated probability)"),
                  gr.Markdown(label="Status"),
-                 gr.Textbox(label="Recommended Fertilizer")],
+                 gr.Markdown(label="Recommended fertilizer"),
+                 gr.Markdown(label="Why (SHAP)")],
         title="M1 — Crop & Fertilizer Recommender",
         flagging_mode="never",
     )

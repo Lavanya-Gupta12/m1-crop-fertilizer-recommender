@@ -29,7 +29,7 @@ class M1Recommender:
         import keras
         from m1.calibration import InputGuard
 
-        d = Path(models_dir)
+        d = self.models_dir = Path(models_dir)
         self.cfg = json.loads((d / "crop_config.json").read_text())
         with open(d / "crop_preprocessors.pkl", "rb") as fh:
             pre = pickle.load(fh)
@@ -102,8 +102,43 @@ class M1Recommender:
                 "note": ("Confidence is uncalibrated (RandomForest on 99 rows; under-confident in CV: "
                          "accuracy 0.97 vs mean confidence 0.64).")}
 
+    # ---------------------------------------------------------------- explanations
+    @staticmethod
+    def _format_reason(names, values, label):
+        order = np.argsort(-np.abs(values))[:3]
+        parts = ", ".join(f"{names[i]} {values[i]:+.2f}" for i in order)
+        return f"Top drivers for '{label}' (SHAP, change in probability vs. a typical input): {parts}"
+
+    def crop_reason(self, x_raw, class_idx):
+        """Kernel SHAP for one input and one class of the deployed calibrated ensemble."""
+        import shap
+        if not hasattr(self, "_crop_bg"):
+            self._crop_bg = np.load(self.models_dir / "shap_background.npz")["crop_background"]
+        f = lambda Z: self.crop_probs(Z)[:, class_idx]                       # noqa: E731
+        sv = shap.KernelExplainer(f, self._crop_bg).shap_values(
+            np.atleast_2d(np.asarray(x_raw, dtype=float)), nsamples=128, silent=True)
+        return self._format_reason(self.cfg["feature_names"], np.asarray(sv)[0], self.classes[class_idx])
+
+    def fert_reason(self, frame, fert_label):
+        """Exact TreeSHAP for the fertilizer RandomForest; one-hot columns summed per input."""
+        import shap
+        pre, clf = self.fert_model.named_steps["pre"], self.fert_model.named_steps["clf"]
+        if not hasattr(self, "_fert_explainer"):
+            self._fert_explainer = shap.TreeExplainer(clf)
+        Xt = pre.transform(frame)
+        Xt = Xt.toarray() if hasattr(Xt, "toarray") else Xt
+        k = list(clf.classes_).index(fert_label)
+        sv = np.asarray(self._fert_explainer.shap_values(Xt))[0, :, k]
+        cols = pre.get_feature_names_out()
+        names = self.fert_cfg["num_cols"] + ["soil_type", "crop"]
+        vals = [sv[[i for i, c in enumerate(cols) if c == f"num__{n}"]].sum() for n in self.fert_cfg["num_cols"]]
+        vals += [sv[[i for i, c in enumerate(cols) if c.startswith("cat__soil_type_")]].sum(),
+                 sv[[i for i, c in enumerate(cols) if c.startswith("cat__label_")]].sum()]
+        return self._format_reason(names, np.array(vals), fert_label)
+
     # ---------------------------------------------------------------- public API
-    def recommend(self, N, P, K, temperature, humidity, ph, rainfall, soil_type=None, moisture=None):
+    def recommend(self, N, P, K, temperature, humidity, ph, rainfall, soil_type=None, moisture=None,
+                  explain=True):
         x = [N, P, K, temperature, humidity, ph, rainfall]
         probs = self.crop_probs(x)[0]
         order = np.argsort(probs)[::-1][:3]
@@ -123,8 +158,15 @@ class M1Recommender:
             message = None
         fert = (self.fertilizer(top3[0]["crop"], temperature, humidity, moisture, N, K, P, soil_type)
                 if soil_type is not None and moisture is not None else None)
+        reasons = {"crop": None, "fertilizer": None}
+        if explain:
+            reasons["crop"] = self.crop_reason(x, int(order[0]))
+            if fert and fert["fertilizer"] is not None:
+                reasons["fertilizer"] = self.fert_reason(
+                    self.fert_frame(temperature, humidity, moisture, N, K, P, soil_type, fert["fert_crop"]),
+                    fert["fertilizer"])
         return {"top3": top3, "status": status, "uncertain": bool(uncertain), "warnings": warnings,
-                "message": message, "fertilizer": fert,
+                "message": message, "fertilizer": fert, "reasons": reasons,
                 "model": {"variant": self.cfg["variant"], "temperature": self.temperature,
                           "uncertain_threshold": self.uncertain_threshold}}
 
@@ -134,6 +176,7 @@ def get_recommender(models_dir=str(DEFAULT_MODELS_DIR)):
     return M1Recommender(models_dir)
 
 
-def recommend(N, P, K, temperature, humidity, ph, rainfall, soil_type=None, moisture=None):
+def recommend(N, P, K, temperature, humidity, ph, rainfall, soil_type=None, moisture=None, explain=True):
     """Module-level entry point used by the Gradio app (loads the artifacts once)."""
-    return get_recommender().recommend(N, P, K, temperature, humidity, ph, rainfall, soil_type, moisture)
+    return get_recommender().recommend(N, P, K, temperature, humidity, ph, rainfall, soil_type, moisture,
+                                       explain)

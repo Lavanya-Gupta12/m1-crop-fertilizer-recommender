@@ -312,3 +312,47 @@ humidity 50–72, moisture 25–65, N 4–42, K 0–19, P 0–42.
 
 Smoke tests with the RF: rice-like → Tier 1, Urea 0.29, 4 range warnings; chickpea mean →
 Tier 2, Urea 0.27, 4 range warnings; mango mean → no data. Stage-1 outputs unchanged.
+
+---
+
+## SHAP — deployed models — 2026-10-25
+
+Command: `python scripts/shap_summary.py` (plots `results/shap/crop_shap_mean_abs.png`,
+`results/shap/fert_shap_mean_abs.png`; numbers `results/shap/shap_summary.json`).
+
+**Crop model:** KernelExplainer on the deployed ensemble+TS (calibrated probabilities, raw
+input units). Background = k-means(20) of the 80% training split; 220 test rows explained
+(10 per class); nsamples 256. Mean |SHAP| averaged over rows and all 22 classes:
+
+| humidity | rainfall | N | P | K | temperature | pH |
+|---|---|---|---|---|---|---|
+| 0.0395 | 0.0356 | 0.0317 | 0.0287 | 0.0236 | 0.0123 | 0.0059 |
+
+**Fertilizer model:** exact TreeExplainer on the deployed RandomForest. One-hot columns are
+summed back to `soil_type` and `crop`. 99 rows explained (all of its training data). Mean
+|SHAP| averaged over rows and all 7 classes:
+
+| P | N | K | crop | Moisture | temperature | soil_type | humidity |
+|---|---|---|---|---|---|---|---|
+| 0.0772 | 0.0678 | 0.0629 | 0.0177 | 0.0116 | 0.0110 | 0.0101 | 0.0092 |
+
+Reading:
+- **Fertilizer:** the choice is driven by the soil's N/P/K levels. Crop and soil type
+  contribute little. This fits fertilizer names that are NPK grades, and it is one more reason
+  the Tier-2 proxy only matters at the margin.
+- **Crop:** humidity, rainfall and N/P/K drive the crop model; pH matters least. The
+  notebook's one-class SHAP (K, rainfall, humidity on top) was consistent but partial.
+
+## Gradio app — final state — 2026-10-25
+
+`python app.py [--share] [--host 0.0.0.0 --port 7860]`. It loads `models/` (no retraining) and
+calls `m1.recommender.recommend()`. Outputs: top-3 crops with calibrated probabilities; status
+(ok / uncertain < 0.75 / out_of_range with the offending features); fertilizer with its tier
+label, uncalibrated confidence and stage-2 range warnings; per-prediction SHAP reasons (Kernel
+SHAP on the top crop, nsamples 128; TreeSHAP on the fertilizer). Latency in WSL: 0.10–0.49 s per
+request. Headless check: page served with HTTP 200. Full smoke output:
+`results/task1/smoke_test.txt`.
+
+The fertilizer reasons for the rice-like and chickpea-like inputs are identical
+(N +0.24, P −0.10, K −0.07). Both inputs exceed the RF's highest N/P/K split points, so they fall
+into the same leaves. This is another symptom of the stage-2 range mismatch.

@@ -1,0 +1,30 @@
+{
+  "crop": {
+    "explained_rows": 220,
+    "background": "kmeans(20) of 80% train split",
+    "nsamples": 256,
+    "mean_abs_shap_by_feature": {
+      "humidity": 0.03951165809167558,
+      "rainfall": 0.035597003419710505,
+      "N": 0.03171849549012742,
+      "P": 0.028747477183655234,
+      "K": 0.02361116090560862,
+      "temperature": 0.012258395508641674,
+      "ph": 0.005884551212172655
+    }
+  },
+  "fertilizer": {
+    "explained_rows": 99,
+    "explainer": "TreeExplainer (exact), one-hot summed",
+    "mean_abs_shap_by_feature": {
+      "P": 0.07722424374587311,
+      "N": 0.06778801874413551,
+      "K": 0.06292188266723303,
+      "crop": 0.017671028689384017,
+      "Moisture": 0.011572801623482596,
+      "temperature": 0.010969650186820723,
+      "soil_type": 0.01010227096133339,
+      "humidity": 0.009229879886661277
+    }
+  }
+}

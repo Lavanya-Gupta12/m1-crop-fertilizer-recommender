@@ -9,6 +9,8 @@ stage-2 range check on 1000 crop-data rows of Tier 1/2 crops: all 5 features ins
   fertilizer warning: humidity=82 is outside the training range [50, 72]
   fertilizer warning: N=90 is outside the training range [4, 42]
   fertilizer warning: K=43 is outside the training range [0, 19]
+  reason (crop): Top drivers for 'rice' (SHAP, change in probability vs. a typical input): rainfall +0.28, temperature +0.17, humidity +0.10
+  reason (fertilizer): Top drivers for 'Urea' (SHAP, change in probability vs. a typical input): N +0.24, P -0.10, K -0.07
 
 ## pulses-like (chickpea class mean from the data: [40.1, 67.8, 79.9, 18.9, 16.9, 7.3, 80.1]), Loamy, moisture 40
   status=ok  top3: chickpea 100.0%, kidneybeans 0.0%, grapes 0.0%
@@ -17,10 +19,13 @@ stage-2 range check on 1000 crop-data rows of Tier 1/2 crops: all 5 features ins
   fertilizer warning: humidity=16.9 is outside the training range [50, 72]
   fertilizer warning: K=79.9 is outside the training range [0, 19]
   fertilizer warning: P=67.8 is outside the training range [0, 42]
+  reason (crop): Top drivers for 'chickpea' (SHAP, change in probability vs. a typical input): humidity +0.46, K +0.29, rainfall +0.06
+  reason (fertilizer): Top drivers for 'Urea' (SHAP, change in probability vs. a typical input): N +0.24, P -0.10, K -0.07
 
 ## no-data crop (mango class mean: [20.1, 27.2, 29.9, 31.2, 50.2, 5.8, 94.7]), Loamy, moisture 40
   status=ok  top3: mango 100.0%, mothbeans 0.0%, pigeonpeas 0.0%
   fertilizer: None conf=- tier=None | No verified fertilizer data for this crop.
+  reason (crop): Top drivers for 'mango' (SHAP, change in probability vs. a typical input): humidity +0.30, P +0.25, rainfall +0.18
 
 ## all zeros
   status=out_of_range  top3: mothbeans 99.8%, maize 0.2%, kidneybeans 0.0%
@@ -28,19 +33,23 @@ stage-2 range check on 1000 crop-data rows of Tier 1/2 crops: all 5 features ins
   warning: temperature=0 is outside the training range [8.82567, 43.6755]
   warning: humidity=0 is outside the training range [14.258, 99.9819]
   warning: ph=0 is outside the training range [3.50475, 9.93509]
+  reason (crop): Top drivers for 'mothbeans' (SHAP, change in probability vs. a typical input): rainfall +0.47, ph +0.25, N +0.15
 
 ## pH = 14, otherwise rice-like
   status=out_of_range  top3: jute 99.9%, rice 0.0%, cotton 0.0%
   message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
   warning: ph=14 is outside the training range [3.50475, 9.93509]
+  reason (crop): Top drivers for 'jute' (SHAP, change in probability vs. a typical input): ph +0.46, rainfall +0.29, N +0.10
 
 ## rainfall = 3000 mm, otherwise rice-like
   status=out_of_range  top3: rice 100.0%, watermelon 0.0%, pomegranate 0.0%
   message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
   warning: rainfall=3000 is outside the training range [20.2113, 298.56]
+  reason (crop): Top drivers for 'rice' (SHAP, change in probability vs. a typical input): rainfall +0.86, temperature +0.02, K +0.01
 
 ## humidity = 150 %, temperature = 60 C
   status=out_of_range  top3: papaya 100.0%, jute 0.0%, rice 0.0%
   message: Input outside the range the model was trained on; the ranking below is not reliable regardless of the probabilities shown.
   warning: temperature=60 is outside the training range [8.82567, 43.6755]
   warning: humidity=150 is outside the training range [14.258, 99.9819]
+  reason (crop): Top drivers for 'papaya' (SHAP, change in probability vs. a typical input): humidity +0.67, temperature +0.31, K +0.02

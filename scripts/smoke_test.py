@@ -1,6 +1,6 @@
 """Smoke tests for the saved M1 artifacts via the public `recommend()` function.
 
-Usage: python scripts/smoke_test.py
+Usage: python scripts/smoke_test.py  (needs models/ from task1_calibration final, train_stage2, shap_summary)
 Also checks that the loaded artifacts reproduce the test metrics in results/task1/final.json.
 """
 import json
@@ -32,6 +32,9 @@ def show(name, out):
         print(f"  fertilizer: {f['fertilizer']} conf={conf} tier={f['tier']} | {f['provenance']}")
         for w in f["warnings"]:
             print(f"  fertilizer warning: {w}")
+    for k, v in out["reasons"].items():
+        if v:
+            print(f"  reason ({k}): {v}")
 
 
 def main():
