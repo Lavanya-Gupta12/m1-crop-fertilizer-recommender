@@ -11,8 +11,27 @@ import gradio as gr
 
 from m1.recommender import get_recommender, recommend
 
+INPUT_LABELS = ["Nitrogen (N)", "Phosphorous (P)", "Potassium (K)", "Temperature (°C)", "Humidity (%)",
+                "pH", "Rainfall (mm)", "Soil Type", "Moisture (%)"]
+
+# clickable example rows (same order as INPUT_LABELS)
+EXAMPLES = [
+    [90, 42, 43, 20.8, 82, 6.5, 202, "Clayey", 45],
+    [40, 68, 80, 18.9, 17, 7.3, 80, "Loamy", 40],
+    [90, 42, 43, 20.8, 82, 14, 202, "Clayey", 45],
+    # an actual mango row from the crop dataset (row index 1100); soil type and moisture are not in that data
+    [2, 40, 27, 29.73770045, 47.54885174, 5.954626604, 90.09586854, "Loamy", 40],
+]
+EXAMPLE_LABELS = ["Rice-like", "Pulses (chickpea-like)", "Out-of-range pH",
+                  "No fertilizer data (mango, real data row)"]
+
 
 def gradio_predict(N, P, K, temperature, humidity, ph, rainfall, soil_type, moisture):
+    values = [N, P, K, temperature, humidity, ph, rainfall, soil_type, moisture]
+    missing = [label for label, v in zip(INPUT_LABELS, values) if v is None or v == ""]
+    if missing:
+        return (None, "**Please fill all inputs** before clicking Submit (or click one of the examples "
+                      "below).\n\nMissing: " + ", ".join(missing), "", "")
     out = recommend(N, P, K, temperature, humidity, ph, rainfall, soil_type, moisture)
     crops = {t["crop"]: t["probability"] for t in out["top3"]}
 
@@ -50,22 +69,17 @@ def build_demo():
     rec = get_recommender()
     return gr.Interface(
         fn=gradio_predict,
-        inputs=[
-            gr.Number(label="Nitrogen (N)", value=90),
-            gr.Number(label="Phosphorous (P)", value=42),
-            gr.Number(label="Potassium (K)", value=43),
-            gr.Number(label="Temperature (°C)", value=20.8),
-            gr.Number(label="Humidity (%)", value=82),
-            gr.Number(label="pH", value=6.5),
-            gr.Number(label="Rainfall (mm)", value=202),
-            gr.Dropdown(choices=rec.soil_types, label="Soil Type", value="Clayey"),
-            gr.Number(label="Moisture (%)", value=45),
-        ],
+        inputs=[gr.Number(label=label, value=None) for label in INPUT_LABELS[:7]]
+               + [gr.Dropdown(choices=rec.soil_types, label=INPUT_LABELS[7], value=None),
+                  gr.Number(label=INPUT_LABELS[8], value=None)],
         outputs=[gr.Label(num_top_classes=3, label="Top-3 crops (calibrated probability)"),
                  gr.Markdown(label="Status"),
                  gr.Markdown(label="Recommended fertilizer"),
                  gr.Markdown(label="Why (SHAP)")],
         title="M1 — Crop & Fertilizer Recommender",
+        examples=EXAMPLES,
+        example_labels=EXAMPLE_LABELS,
+        cache_examples=False,
         flagging_mode="never",
     )
 
