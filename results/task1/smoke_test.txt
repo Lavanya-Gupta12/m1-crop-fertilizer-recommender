@@ -1,12 +1,26 @@
 reloaded test accuracy=0.9841 (final.json: 0.9841) match=True
+tier coverage: {'tier1': "3/22 ['cotton', 'maize', 'rice']", 'tier2': "7/22 ['blackgram', 'chickpea', 'kidneybeans', 'lentil', 'mothbeans', 'mungbean', 'pigeonpeas']", 'none': "12/22 ['apple', 'banana', 'coconut', 'coffee', 'grapes', 'jute', 'mango', 'muskmelon', 'orange', 'papaya', 'pomegranate', 'watermelon']"}
+stage-2 range check on 1000 crop-data rows of Tier 1/2 crops: all 5 features inside = 1.7%; per feature inside: temperature 59%, humidity 42%, N 62%, K 46%, P 24%
 
 ## rice-like (reference smoke test), Clayey soil, moisture 45
   status=ok  top3: rice 89.6%, jute 10.4%, papaya 0.0%
-  fertilizer: {'fertilizer': '10-26-26', 'confidence': 0.7073115110397339, 'note': 'Uncalibrated stage-2 confidence (notebook model; 99 training rows).'}
+  fertilizer: Urea conf=0.29 tier=1 | Tier 1: ML model trained on 'rice' rows.
+  fertilizer warning: temperature=20.8 is outside the training range [25, 38]
+  fertilizer warning: humidity=82 is outside the training range [50, 72]
+  fertilizer warning: N=90 is outside the training range [4, 42]
+  fertilizer warning: K=43 is outside the training range [0, 19]
 
 ## pulses-like (chickpea class mean from the data: [40.1, 67.8, 79.9, 18.9, 16.9, 7.3, 80.1]), Loamy, moisture 40
   status=ok  top3: chickpea 100.0%, kidneybeans 0.0%, grapes 0.0%
-  fertilizer: {'fertilizer': None, 'confidence': None, 'note': "No fertilizer data available for 'chickpea': the fertilizer dataset doesn't cover this crop."}
+  fertilizer: Urea conf=0.27 tier=2 | Tier 2: proxy via crop group - 'chickpea' answered with the 'pulses' rows of the fertilizer dataset (assumption, not crop-specific data).
+  fertilizer warning: temperature=18.9 is outside the training range [25, 38]
+  fertilizer warning: humidity=16.9 is outside the training range [50, 72]
+  fertilizer warning: K=79.9 is outside the training range [0, 19]
+  fertilizer warning: P=67.8 is outside the training range [0, 42]
+
+## no-data crop (mango class mean: [20.1, 27.2, 29.9, 31.2, 50.2, 5.8, 94.7]), Loamy, moisture 40
+  status=ok  top3: mango 100.0%, mothbeans 0.0%, pigeonpeas 0.0%
+  fertilizer: None conf=- tier=None | No verified fertilizer data for this crop.
 
 ## all zeros
   status=out_of_range  top3: mothbeans 99.8%, maize 0.2%, kidneybeans 0.0%

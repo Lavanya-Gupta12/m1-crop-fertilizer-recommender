@@ -281,3 +281,34 @@ Paired over the 15 splits (difference ± std; wins/ties/losses for the first mod
 
 Mean top-1 confidence: RF 0.643 (accuracy 0.967, so strongly under-confident), embedding NN
 0.799, one-hot NN 0.731.
+
+---
+
+## Step 6 — deployed stage 2 retrained without leakage — 2026-10-25
+
+Command: `python scripts/train_stage2.py` (artifacts `models/fert_rf.joblib`,
+`models/fert_config.json`; git-ignored). Model: the stage-2 benchmark winner on accuracy and
+macro-F1, a RandomForest (300 trees, `random_state=42`) on StandardScaler(numerics) +
+OneHot(soil, crop), as one sklearn Pipeline. **Training data: all 99 rows.** Preprocessing is
+fit only on the pipeline's own training data. There is no held-out split; the performance
+estimate is the benchmark CV (preprocessing fit inside each fold): **accuracy 0.9667 ±
+0.0408, macro-F1 0.9266 ± 0.0908, majority-class baseline 0.2221 / 0.0518.** Training-set
+accuracy 1.000 is not an estimate. The old notebook NN (`scripts/train_stage2_notebook.py`,
+0.95 on 20 rows) is no longer deployed.
+
+**Stage-2 input-range guard** (fertilizer-data min/max ± 10% of range): temperature 25–38,
+humidity 50–72, moisture 25–65, N 4–42, K 0–19, P 0–42.
+
+**Range mismatch between datasets** (command: `python scripts/smoke_test.py`):
+- Of the 1,000 crop-dataset rows for Tier 1/2 crops, only **1.7%** fall inside the stage-2
+  range on all five shared features.
+- Per feature inside: temperature 59%, humidity 42%, N 62%, K 46%, P 24%.
+- Moisture is not checked, because the crop data has no moisture column.
+- So **for almost every realistic stage-1 input, stage 2 extrapolates.** The UI now warns about
+  this on each answer.
+- Example: on the rice-like smoke test (N 90, K 43, 20.8 °C, 82%), four features are out of
+  range. The RF answers Urea at 0.29 confidence; the old NN answered 10-26-26 at 0.71.
+- This is a data limitation (the datasets don't overlap), not something a model change fixes.
+
+Smoke tests with the RF: rice-like → Tier 1, Urea 0.29, 4 range warnings; chickpea mean →
+Tier 2, Urea 0.27, 4 range warnings; mango mean → no data. Stage-1 outputs unchanged.

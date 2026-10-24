@@ -28,7 +28,10 @@ def show(name, out):
         print(f"  warning: {w}")
     f = out["fertilizer"]
     if f:
-        print(f"  fertilizer: {f['fertilizer']} conf={f['confidence']} tier={f['tier']} | {f['provenance']}")
+        conf = "-" if f["confidence"] is None else f"{f['confidence']:.2f}"
+        print(f"  fertilizer: {f['fertilizer']} conf={conf} tier={f['tier']} | {f['provenance']}")
+        for w in f["warnings"]:
+            print(f"  fertilizer warning: {w}")
 
 
 def main():
@@ -45,6 +48,17 @@ def main():
     from m1 import tiers
     cov = tiers.coverage(enc.classes_)
     print("tier coverage:", {k: f"{len(v)}/{len(enc.classes_)} {v}" for k, v in cov.items()})
+
+    # how often do real stage-1 inputs of Tier 1/2 crops fall inside the stage-2 training range?
+    g = rec.fert_guard
+    cols = ["temperature", "humidity", "N", "K", "P"]          # moisture is not in the crop data
+    idx = [g.feature_names.index(c) for c in cols]
+    served = df[df["label"].isin(cov["tier1"] + cov["tier2"])]
+    v = served[cols].values
+    inside = ((v >= g.lower_[idx]) & (v <= g.upper_[idx]))
+    print(f"stage-2 range check on {len(served)} crop-data rows of Tier 1/2 crops: "
+          f"all 5 features inside = {inside.all(axis=1).mean():.1%}; per feature inside: "
+          + ", ".join(f"{c} {inside[:, i].mean():.0%}" for i, c in enumerate(cols)))
 
     mango_mean = df.loc[df["label"] == "mango", NUM_COLS_CROP].mean().round(1).tolist()
     chickpea_mean = df.loc[df["label"] == "chickpea", NUM_COLS_CROP].mean().round(1).tolist()
